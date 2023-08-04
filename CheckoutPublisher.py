@@ -1,11 +1,11 @@
 import pika
 
 
-class InventoryConsumner:
+class CheckoutPublisher:
     def __init__(self, config):
         self.config = config
 
-    def consume(self, routing_key, message):
+    def publish(self, routing_key, message):
         connection = self.create_connection()
         connection.channel()
 
@@ -27,11 +27,12 @@ class InventoryConsumner:
         )
         return pika.BlockingConnection(param)
 
-    config = {
+config = {
         'host': 'localhost',
         'port': 5672,
-        'exchange': 'AmazonExchange'
+        'exchange': 'AmazonQueue'
     }
-    publisher = CheckoutPublisher(config)
-    publisher.publish('inventory', 'data')
-    publisher.publish('shipping', 'ship')
+    
+publisher = CheckoutPublisher(config)
+publisher.publish('inventory', 'Reconfigure inventory for order')
+publisher.publish('shipping', 'Ship order to address')
