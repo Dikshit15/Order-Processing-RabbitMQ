@@ -1,38 +1,30 @@
 import pika
-
+import sys
 
 class CheckoutPublisher:
-    def __init__(self, config):
-        self.config = config
-
-    def publish(self, routing_key, message):
-        connection = self.create_connection()
-        connection.channel()
-
+    @staticmethod
+    def create_connection():
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters('localhost')
+        )
+        return connection
+    
+    def publish_message(self, routing_key, message):
+        connection = CheckoutPublisher.create_connection()
+        channel = connection.channel()
         channel.exchange_declare(
-            exchange=self.config['exchange'],
-            exchange_type = 'topic'                
-            )
-
+            exchange='AmazonCheckout',
+            exchange_type='topic'
+        )
         channel.basic_publish(
-            exchange=self.config['exchange'],
+            exchange='AmazonCheckout',
             routing_key=routing_key,
             body=message
-            )
-            
-    def create_connection(self):
-        param = pika.ConnectionParameters(
-            host=self.config['host'],
-            port=self.config['port']
         )
-        return pika.BlockingConnection(param)
+        connection.close()
 
-config = {
-        'host': 'localhost',
-        'port': 5672,
-        'exchange': 'AmazonQueue'
-    }
-    
-publisher = CheckoutPublisher(config)
-publisher.publish('inventory', 'Reconfigure inventory for order')
-publisher.publish('shipping', 'Ship order to address')
+publisher = CheckoutPublisher()
+routing_key = sys.argv[1] if len(sys.argv) > 2 else print("Incomplete input")
+message = ' '.join(sys.argv[2:])
+publisher.publish_message(routing_key, message)
+
